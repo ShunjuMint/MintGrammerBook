@@ -55,7 +55,8 @@ function search(){
 function renderTOC(){
  $('toc').replaceChildren();
  for(const chapter of chapters){
-  $('toc').append(node('div',chapter.title,'chapter'));
+  const main=lookup.get(chapter.id);
+  if(main){const a=itemLink(main);a.textContent=chapter.title;a.className='chapter';$('toc').append(a)}
   for(const x of chapter.articles){const item=lookup.get(x.id);if(!item)continue;const a=itemLink(item);a.textContent=item.title;$('toc').append(a)}
  }
 }
@@ -68,7 +69,7 @@ try{
  const [cfg,all]=await Promise.all([readJSON('data/config.json'),readJSON('data/article-index.json')]);
  if(!Array.isArray(all))throw Error('article-index.json は配列にしてください');
  chapters=all.filter(c=>typeof c.title==='string'&&Array.isArray(c.articles));
- items=chapters.flatMap(c=>c.articles.map(x=>({...x,chapter:c.title})));
+ items=chapters.flatMap(c=>[c.overview,...c.articles].filter(Boolean).map(x=>({...x,chapter:c.title})));
  if(items.some(x=>typeof x.id!=='string'||typeof x.title!=='string'||!validPath(x.file)))throw Error('記事のid、title、fileを確認してください');
  if(new Set(items.map(x=>x.id)).size!==items.length)throw Error('記事IDが重複しています');
  lookup=new Map(items.map(x=>[x.id,x]));
