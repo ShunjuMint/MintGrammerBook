@@ -1,13 +1,3 @@
----
-id: ""
-title: ""
-summary: ""
-date: yyyy-mm-dd
-tags: ""
-related: ""
----
-
-
 # 言語の概要
 
 ## この文法書の読み方
