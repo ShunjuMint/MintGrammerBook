@@ -8,14 +8,19 @@ function itemLink(item){const a=node('a');a.href=href(item.id);a.dataset.id=item
 async function read(path){const r=await fetch(new URL(path,document.baseURI),{cache:'no-cache'});if(!r.ok)throw Error(path+': HTTP '+r.status);return r.text()}
 async function readJSON(path){return JSON.parse(await read(path))}
 function validPath(path){return typeof path==='string'&&/^articles\/[a-zA-Z0-9_/-]+\.md$/.test(path)&&!path.split('/').includes('..')}
-function markdownHTML(text){
+function markdownHTML(text,file){
  if(!window.marked||!window.DOMPurify)throw Error('Markdown表示ライブラリを読み込めませんでした');
  const html=window.marked.parse(text,{gfm:true,breaks:false});
  const clean=window.DOMPurify.sanitize(html);
  const template=document.createElement('template');template.innerHTML=clean;
+ const base=new URL(file,document.baseURI);
+ for(const img of template.content.querySelectorAll('img[src]')){
+  const src=img.getAttribute('src');if(src&&!/^(?:[a-z][a-z0-9+.-]*:|\/|#)/i.test(src))img.setAttribute('src',new URL(src,base).href);
+ }
  for(const a of template.content.querySelectorAll('a[href]')){
    const address=a.getAttribute('href')||'';
    if(address.startsWith('#'))continue;
+   if(!/^(?:[a-z][a-z0-9+.-]*:|\/)/i.test(address))a.setAttribute('href',new URL(address,base).href);
    try{const u=new URL(address,document.baseURI);if(u.protocol==='https:'||u.protocol==='http:'){a.target='_blank';a.rel='noopener noreferrer';}else a.removeAttribute('href');}catch{a.removeAttribute('href')}
  }
  return template.content;
@@ -29,10 +34,11 @@ async function show(id,historyMode=false){
  document.querySelectorAll('#toc a').forEach(link=>link.dataset.id===item.id?link.setAttribute('aria-current','page'):link.removeAttribute('aria-current'));
  const idx=items.indexOf(item);for(const [key,target,prefix] of [['prev',items[idx-1],'← '],['next',items[idx+1],'→ ']]){const link=$(key);link.hidden=!target;if(target){link.href=href(target.id);link.dataset.id=target.id;link.textContent=prefix+target.title}}
  try{
-  if(item.body===undefined)item.body=await read(item.file);
+  if(typeof item.body!=='string')throw Error('記事本文がありません');
   if(request!==requestCounter)return;
-  const content=node('div',undefined,'markdown-body');content.append(markdownHTML(item.body));
+  const content=node('div',undefined,'markdown-body');content.append(markdownHTML(item.body,item.file));
   a.replaceChildren(node('p',item.chapter,'eyebrow'),content);
+  if(item.date)a.append(node('p','更新日: '+item.date,'muted'));
   if(item.tags?.length){const box=node('div',undefined,'tags');for(const tag of item.tags)box.append(node('span',tag,'tag'));a.append(box)}
   const related=(item.related||[]).map(id=>lookup.get(id)).filter(Boolean);
   if(related.length){const section=node('section',undefined,'section');section.append(node('h2','関連項目'));const box=node('div',undefined,'related');for(const ref of related){const link=itemLink(ref);link.textContent=ref.title;box.append(link)}section.append(box);a.append(section)}
@@ -59,8 +65,8 @@ document.addEventListener('click',e=>{const a=e.target.closest('a[data-id]');if(
 window.addEventListener('popstate',()=>show(selected()));
 window.addEventListener('keydown',e=>{if(e.key==='/'&&!['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)&&!$('about-dialog').open){e.preventDefault();$('query').focus()}});
 try{
- const [cfg,all]=await Promise.all([readJSON('data/config.json'),readJSON('data/chapters.json')]);
- if(!Array.isArray(all))throw Error('chapters.json は配列にしてください');
+ const [cfg,all]=await Promise.all([readJSON('data/config.json'),readJSON('data/article-index.json')]);
+ if(!Array.isArray(all))throw Error('article-index.json は配列にしてください');
  chapters=all.filter(c=>typeof c.title==='string'&&Array.isArray(c.articles));
  items=chapters.flatMap(c=>c.articles.map(x=>({...x,chapter:c.title})));
  if(items.some(x=>typeof x.id!=='string'||typeof x.title!=='string'||!validPath(x.file)))throw Error('記事のid、title、fileを確認してください');
@@ -68,8 +74,6 @@ try{
  lookup=new Map(items.map(x=>[x.id,x]));
  $('brand').textContent=cfg.title||'文法書';document.title=cfg.title||'文法書';$('about-text').textContent=cfg.about||'説明は未登録です。';
  $('count').textContent=items.length+' 項目';renderTOC();
- await Promise.all(items.map(async item=>{try{item.body=await read(item.file)}catch(e){console.error(e);item.body='';item.loadError=true}}));
  if(items.length)await show(selected());else{$('status').hidden=false;$('status').textContent='文法記事が登録されていません。'}
  if(selected()&&!lookup.has(selected())){$('status').hidden=false;$('status').textContent='指定された項目がありません。先頭の記事を表示しています。'}
- if(items.some(x=>x.loadError)){$('status').hidden=false;$('status').textContent='一部の記事の読み込みに失敗しました。chapters.json の file パスを確認してください。'}
 }catch(e){console.error(e);$('status').hidden=false;$('status').textContent='文法データを読み込めませんでした。Webサーバー上で開いているか確認してください。'}
