@@ -25,10 +25,11 @@ async function prepareFixture() {
   const cwd = await mkdtemp(path.join(os.tmpdir(), 'mint-grammar-test-'));
   await mkdir(path.join(cwd, 'scripts'));
   await cp(path.join(root, 'scripts/build.mjs'), path.join(cwd, 'scripts/build.mjs'));
-  await cp(path.join(root, 'index.html'), path.join(cwd, 'index.html'));
-  await cp(path.join(root, 'assets'), path.join(cwd, 'assets'), {recursive: true});
-  await cp(path.join(fixtureRoot, 'articles'), path.join(cwd, 'articles'), {recursive: true});
-  await cp(path.join(fixtureRoot, 'data'), path.join(cwd, 'data'), {recursive: true});
+  await mkdir(path.join(cwd, 'site'));
+  await cp(path.join(root, 'site/index.html'), path.join(cwd, 'site/index.html'));
+  await cp(path.join(root, 'site/assets'), path.join(cwd, 'site/assets'), {recursive: true});
+  await cp(path.join(fixtureRoot, 'articles'), path.join(cwd, 'site/articles'), {recursive: true});
+  await cp(path.join(fixtureRoot, 'data'), path.join(cwd, 'site/data'), {recursive: true});
   return cwd;
 }
 
@@ -83,29 +84,29 @@ await test('chapter config, article metadata, and explicit display order', async
 });
 
 await test('missing chapter config is rejected', async cwd => {
-  await rm(path.join(cwd, 'articles/phonology/config.json'));
+  await rm(path.join(cwd, 'site/articles/phonology/config.json'));
   runBuild(cwd, true, /Missing or invalid chapter config/);
 });
 
 await test('unknown article ID in chapters.json is rejected', async cwd => {
-  await change(cwd, 'data/chapters.json', JSON.stringify({phonology: ['unknown'], morphology: ['nouns']}));
+  await change(cwd, 'site/data/chapters.json', JSON.stringify({phonology: ['unknown'], morphology: ['nouns']}));
   runBuild(cwd, true, /not an article/);
 });
 
 await test('duplicate article IDs are rejected', async cwd => {
-  const file = 'articles/morphology/nouns.md';
+  const file = 'site/articles/morphology/nouns.md';
   const original = await readFile(path.join(cwd, file), 'utf8');
   await change(cwd, file, original.replace('id: "nouns"', 'id: "phonemes"'));
   runBuild(cwd, true, /Duplicate Markdown id/);
 });
 
 await test('missing frontmatter is rejected', async cwd => {
-  await change(cwd, 'articles/morphology/nouns.md', '# No metadata\n');
+  await change(cwd, 'site/articles/morphology/nouns.md', '# No metadata\n');
   runBuild(cwd, true, /frontmatter .* required/);
 });
 
 await test('unlisted Markdown article is rejected', async cwd => {
-  await change(cwd, 'data/chapters.json', JSON.stringify({phonology: ['syllables', 'phonemes'], morphology: []}));
+  await change(cwd, 'site/data/chapters.json', JSON.stringify({phonology: ['syllables', 'phonemes'], morphology: []}));
   runBuild(cwd, true, /not listed in chapters.json/);
 });
 
