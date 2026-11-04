@@ -3,8 +3,9 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
-const relative=p=>path.relative(root,p).split(path.sep).join('/');
-const file=async p=>readFile(path.join(root,p),'utf8');
+const site=path.join(root,'site');
+const relative=p=>path.relative(site,p).split(path.sep).join('/');
+const file=async p=>readFile(path.join(site,p),'utf8');
 const fail=message=>{throw new Error(message)};
 const isId=id=>typeof id==='string'&&/^[\p{L}\p{N}_-]+$/u.test(id)&&id!=='.'&&id!=='..';
 function yamlValue(raw){
@@ -54,7 +55,7 @@ async function scan(dir){
 export async function build(destination=path.join(root,'dist')){
  const ordering=JSON.parse(await file('data/chapters.json'));
  if(!ordering||typeof ordering!=='object'||Array.isArray(ordering))fail('chapters.json must be an object: {"phonology": ["article-id"]}');
- const articleRoot=path.join(root,'articles');
+ const articleRoot=path.join(site,'articles');
  const files=await scan(articleRoot);
  const all=new Map();
  for(const filename of files){
@@ -92,8 +93,8 @@ export async function build(destination=path.join(root,'dist')){
  }
  for(const id of all.keys())if(!ids.has(id))fail('Markdown article not listed in chapters.json: '+id);
  await mkdir(destination,{recursive:true});
- for(const name of ['index.html'])await cp(path.join(root,name),path.join(destination,name));
- for(const dir of ['assets','data','articles'])await cp(path.join(root,dir),path.join(destination,dir),{recursive:true});
+ for(const name of ['index.html'])await cp(path.join(site,name),path.join(destination,name));
+ for(const dir of ['assets','data','articles'])await cp(path.join(site,dir),path.join(destination,dir),{recursive:true});
  await writeFile(path.join(destination,'data','article-index.json'),JSON.stringify(chapters,null,2)+'\n');
  return {chapters:chapters.length,articles:ids.size};
 }
