@@ -11,6 +11,7 @@ const index=JSON.parse(await readFile(path.join(root,'dist/data/article-index.js
 assert.ok(Array.isArray(index),'generated article index must be an array');
 for(const chapter of index){
  assert.ok(chapter.overview&&chapter.overview.id===chapter.id,'chapter overview must match folder');
+ assert.equal(chapter.overview.file,'articles/'+chapter.id+'/config.json');
  assert.ok(Array.isArray(chapter.articles));
  for(const article of chapter.articles)assert.ok(article.file.startsWith('articles/'));
 }
@@ -31,6 +32,8 @@ try{
  assert.equal(sample.length,1);
  assert.equal(sample[0].id,'phonology');
  assert.equal(sample[0].title,'音韻論');
+ assert.equal(sample[0].overview.file,'articles/phonology/config.json');
+ assert.deepEqual(sample[0].overview.tags,['音韻論']);
  assert.equal(sample[0].overview.body.includes('# 音韻論'),true);
  assert.deepEqual(sample[0].articles.map(x=>x.id),['phonemes']);
  assert.equal(sample[0].articles[0].title,'音素');
