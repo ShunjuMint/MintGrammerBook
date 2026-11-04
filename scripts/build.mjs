@@ -59,25 +59,32 @@ export async function build(destination=path.join(root,'dist')){
  const all=new Map();
  for(const filename of files){
   const rel=relative(filename),meta=parseFrontmatter(await readFile(filename,'utf8'),rel);
-  if(all.has(meta.id))fail('Duplicate article id: '+meta.id);
-  const folder=path.relative(articleRoot,filename).split(path.sep)[0];
-  all.set(meta.id,{...meta,file:rel,folder});
+  if(all.has(meta.id))fail('Duplicate Markdown id: '+meta.id);
+  const relativeParts=path.relative(articleRoot,filename).split(path.sep);
+  if(relativeParts.length<2)fail('Markdown files must be inside an English-named chapter folder: '+rel);
+  const folder=relativeParts[0];
+  if(!/^[a-z][a-z0-9-]*$/.test(folder))fail('Chapter folder must use English lowercase letters: '+folder);
+  const isChapter=relativeParts.length===2&&relativeParts[1]===folder+'.md';
+  if(isChapter&&meta.id!==folder)fail('Chapter id must match chapter folder name: '+folder);
+  all.set(meta.id,{...meta,file:rel,folder,isChapter});
  }
  const chapters=[],ids=new Set();
  for(const [folder,articleIds] of Object.entries(ordering)){
-  if(!isId(folder))fail('Invalid chapter folder: '+folder);
+  if(!/^[a-z][a-z0-9-]*$/.test(folder))fail('Invalid English chapter folder: '+folder);
   if(!Array.isArray(articleIds))fail(folder+': article order must be an array');
+  const overview=all.get(folder);
+  if(!overview||!overview.isChapter||overview.folder!==folder)fail('Missing chapter metadata: articles/'+folder+'/'+folder+'.md');
+  ids.add(folder);
   const articles=[];
   for(const id of articleIds){
    if(!isId(id)||ids.has(id))fail('Invalid or repeated ordered id: '+id);
    const article=all.get(id);
-   if(!article||article.folder!==folder)fail('Article '+id+' is not in articles/'+folder);
+   if(!article||article.folder!==folder||article.isChapter)fail('Article '+id+' is not an article in articles/'+folder);
    ids.add(id);articles.push(article);
   }
-  const label=folder.replace(/^(\d+)[-_]/,'$1 ').replaceAll('_',' ');
-  chapters.push({id:folder,title:label,articles});
+  chapters.push({id:folder,title:overview.title,overview,articles});
  }
- for(const id of all.keys())if(!ids.has(id))fail('Article not listed in chapters.json: '+id);
+ for(const id of all.keys())if(!ids.has(id))fail('Markdown article or chapter not listed in chapters.json: '+id);
  await mkdir(destination,{recursive:true});
  for(const name of ['index.html'])await cp(path.join(root,name),path.join(destination,name));
  for(const dir of ['assets','data','articles'])await cp(path.join(root,dir),path.join(destination,dir),{recursive:true});
