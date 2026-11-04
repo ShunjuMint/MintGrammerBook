@@ -1,12 +1,18 @@
 ---
 id: "phonemes"
 title: "音素"
-summary: "音素について"
+summary: "テスト用の音素記事"
 date: 2026-11-05
 tags: ["音韻論", "IPA"]
-related: ["phonology"]
+related: ["syllables"]
 ---
 
 # 音素
 
-テスト用の本文です。
+これは表示確認のための**テスト記事**です。
+
+| 記号 | 内容 |
+| --- | --- |
+| /a/ | 母音の例 |
+
+![音素図](images/sample.svg)
