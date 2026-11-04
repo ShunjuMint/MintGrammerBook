@@ -53,7 +53,7 @@ async function scan(dir){
 }
 export async function build(destination=path.join(root,'dist')){
  const ordering=JSON.parse(await file('data/chapters.json'));
- if(!ordering||typeof ordering!=='object'||Array.isArray(ordering))fail('chapters.json must be an object: {"01-音韻論": ["article-id"]}');
+ if(!ordering||typeof ordering!=='object'||Array.isArray(ordering))fail('chapters.json must be an object: {"phonology": ["article-id"]}');
  const articleRoot=path.join(root,'articles');
  const files=await scan(articleRoot);
  const all=new Map();
@@ -64,27 +64,33 @@ export async function build(destination=path.join(root,'dist')){
   if(relativeParts.length<2)fail('Markdown files must be inside an English-named chapter folder: '+rel);
   const folder=relativeParts[0];
   if(!/^[a-z][a-z0-9-]*$/.test(folder))fail('Chapter folder must use English lowercase letters: '+folder);
-  const isChapter=relativeParts.length===2&&relativeParts[1]===folder+'.md';
-  if(isChapter&&meta.id!==folder)fail('Chapter id must match chapter folder name: '+folder);
-  all.set(meta.id,{...meta,file:rel,folder,isChapter});
+  all.set(meta.id,{...meta,file:rel,folder});
  }
  const chapters=[],ids=new Set();
  for(const [folder,articleIds] of Object.entries(ordering)){
   if(!/^[a-z][a-z0-9-]*$/.test(folder))fail('Invalid English chapter folder: '+folder);
   if(!Array.isArray(articleIds))fail(folder+': article order must be an array');
-  const overview=all.get(folder);
-  if(!overview||!overview.isChapter||overview.folder!==folder)fail('Missing chapter metadata: articles/'+folder+'/'+folder+'.md');
+  const configPath='articles/'+folder+'/config.json';
+  let config;
+  try{config=JSON.parse(await file(configPath));}catch(error){fail('Missing or invalid chapter config: '+configPath+' ('+error.message+')')}
+  if(config.id!==undefined&&config.id!==folder)fail(configPath+': id must match folder name');
+  if(typeof config.title!=='string'||!config.title.trim())fail(configPath+': title is required');
+  if(all.has(folder))fail('Chapter id conflicts with an article id: '+folder);
+  const overview={id:folder,title:config.title,summary:typeof config.summary==='string'?config.summary:'',
+    date:typeof config.date==='string'?config.date:'',tags:Array.isArray(config.tags)?config.tags:[],
+    related:Array.isArray(config.related)?config.related:[],file:configPath,folder,
+    body:'# '+config.title+'\n\n'+(typeof config.summary==='string'?config.summary:'')};
   ids.add(folder);
   const articles=[];
   for(const id of articleIds){
    if(!isId(id)||ids.has(id))fail('Invalid or repeated ordered id: '+id);
    const article=all.get(id);
-   if(!article||article.folder!==folder||article.isChapter)fail('Article '+id+' is not an article in articles/'+folder);
+   if(!article||article.folder!==folder)fail('Article '+id+' is not an article in articles/'+folder);
    ids.add(id);articles.push(article);
   }
   chapters.push({id:folder,title:overview.title,overview,articles});
  }
- for(const id of all.keys())if(!ids.has(id))fail('Markdown article or chapter not listed in chapters.json: '+id);
+ for(const id of all.keys())if(!ids.has(id))fail('Markdown article not listed in chapters.json: '+id);
  await mkdir(destination,{recursive:true});
  for(const name of ['index.html'])await cp(path.join(root,name),path.join(destination,name));
  for(const dir of ['assets','data','articles'])await cp(path.join(root,dir),path.join(destination,dir),{recursive:true});
