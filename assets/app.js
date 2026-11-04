@@ -7,7 +7,7 @@ const href=id=>{const u=new URL(location.href);u.searchParams.set('id',id);u.has
 function itemLink(item){const a=node('a');a.href=href(item.id);a.dataset.id=item.id;return a}
 async function read(path){const r=await fetch(new URL(path,document.baseURI),{cache:'no-cache'});if(!r.ok)throw Error(path+': HTTP '+r.status);return r.text()}
 async function readJSON(path){return JSON.parse(await read(path))}
-function validPath(path){return typeof path==='string'&&/^articles\/[a-zA-Z0-9_/-]+\.md$/.test(path)&&!path.split('/').includes('..')}
+function validPath(path){return typeof path==='string'&&/^articles\/[^?#\\]+\.md$/u.test(path)&&!path.split('/').some(s=>s==='..'||s==='.'||s==='')}
 function markdownHTML(text,file){
  if(!window.marked||!window.DOMPurify)throw Error('Markdown表示ライブラリを読み込めませんでした');
  const html=window.marked.parse(text,{gfm:true,breaks:false});
