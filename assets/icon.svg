@@ -1,9 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-<title>MintGrammerBook</title>
-<rect width="64" height="64" rx="14" fill="#c9f2c7"/>
-<path d="M9 20q11-5 23 3 12-8 23-3v29q-12-4-23 4-11-8-23-4z" fill="#fff" stroke="#629460" stroke-width="3" stroke-linejoin="round"/>
-<path d="M32 23v30" fill="none" stroke="#96be8c" stroke-width="2"/>
-<path d="M32 20v-6m0 5q-11 0-12-9 9 0 12 9zm0 0q11 0 12-9-9 0-12 9z" stroke="#629460" stroke-width="2" stroke-linejoin="round" fill="#629460"/>
-<path d="M36 44q7-15 15-17-2 11-15 17l-3 4" fill="#629460" stroke="#629460" stroke-linejoin="round"/>
-<path d="M36 44l12-13" stroke="#fff" stroke-width="1.5"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="#28574c"/><path d="M14 17h14q4 0 4 5v28q0-5-4-5H14zm36 0H36q-4 0-4 5v28q0-5 4-5h14z" fill="none" stroke="#f4f2e9" stroke-width="3"/></svg>
