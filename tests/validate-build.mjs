@@ -1,43 +1,112 @@
 import assert from 'node:assert/strict';
-import {readFile,readdir,mkdtemp,mkdir,cp,rm,writeFile} from 'node:fs/promises';
+import {cp, mkdtemp, mkdir, readFile, readdir, rm, writeFile} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
-import path from 'node:path';
 import os from 'node:os';
+import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
-const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
-execFileSync(process.execPath,['scripts/build.mjs'],{cwd:root,stdio:'inherit'});
-const index=JSON.parse(await readFile(path.join(root,'dist/data/article-index.json'),'utf8'));
-assert.ok(Array.isArray(index),'generated article index must be an array');
-for(const chapter of index){
- assert.ok(chapter.overview&&chapter.overview.id===chapter.id,'chapter overview must match folder');
- assert.equal(chapter.overview.file,'articles/'+chapter.id+'/config.json');
- assert.ok(Array.isArray(chapter.articles));
- for(const article of chapter.articles)assert.ok(article.file.startsWith('articles/'));
-}
-const files=await readdir(path.join(root,'dist'));
-assert.ok(!files.includes('tests'),'tests must not be published');
-assert.ok(!files.includes('README.md'),'README must not be published');
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const fixtureRoot = path.join(root, 'tests/fixtures/site');
+let passed = 0;
 
-const temporary=await mkdtemp(path.join(os.tmpdir(),'mintgrammar-test-'));
-try{
- await mkdir(path.join(temporary,'scripts'),{recursive:true});
- await cp(path.join(root,'scripts/build.mjs'),path.join(temporary,'scripts/build.mjs'));
- await cp(path.join(root,'index.html'),path.join(temporary,'index.html'));
- await cp(path.join(root,'assets'),path.join(temporary,'assets'),{recursive:true});
- await cp(path.join(root,'tests/fixtures/site/articles'),path.join(temporary,'articles'),{recursive:true});
- await cp(path.join(root,'tests/fixtures/site/data'),path.join(temporary,'data'),{recursive:true});
- execFileSync(process.execPath,['scripts/build.mjs'],{cwd:temporary,stdio:'inherit'});
- const sample=JSON.parse(await readFile(path.join(temporary,'dist/data/article-index.json'),'utf8'));
- assert.equal(sample.length,1);
- assert.equal(sample[0].id,'phonology');
- assert.equal(sample[0].title,'音韻論');
- assert.equal(sample[0].overview.file,'articles/phonology/config.json');
- assert.deepEqual(sample[0].overview.tags,['音韻論']);
- assert.equal(sample[0].overview.body.includes('# 音韻論'),true);
- assert.deepEqual(sample[0].articles.map(x=>x.id),['phonemes']);
- assert.equal(sample[0].articles[0].title,'音素');
-}finally{
- await rm(temporary,{recursive:true,force:true});
+function runBuild(cwd, shouldFail = false, errorPattern) {
+  try {
+    execFileSync(process.execPath, ['scripts/build.mjs'], {
+      cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe']
+    });
+    if (shouldFail) assert.fail('Expected the build to fail');
+  } catch (error) {
+    if (!shouldFail) throw error;
+    assert.match(String(error.stderr || error.message), errorPattern);
+  }
 }
-console.log('Build and chapter metadata tests passed');
+
+async function prepareFixture() {
+  const cwd = await mkdtemp(path.join(os.tmpdir(), 'mint-grammar-test-'));
+  await mkdir(path.join(cwd, 'scripts'));
+  await cp(path.join(root, 'scripts/build.mjs'), path.join(cwd, 'scripts/build.mjs'));
+  await cp(path.join(root, 'index.html'), path.join(cwd, 'index.html'));
+  await cp(path.join(root, 'assets'), path.join(cwd, 'assets'), {recursive: true});
+  await cp(path.join(fixtureRoot, 'articles'), path.join(cwd, 'articles'), {recursive: true});
+  await cp(path.join(fixtureRoot, 'data'), path.join(cwd, 'data'), {recursive: true});
+  return cwd;
+}
+
+async function test(name, callback) {
+  const cwd = await prepareFixture();
+  try {
+    await callback(cwd);
+    passed++;
+    console.log('PASS ' + name);
+  } finally {
+    await rm(cwd, {recursive: true, force: true});
+  }
+}
+
+async function change(cwd, file, value) {
+  await writeFile(path.join(cwd, file), value, 'utf8');
+}
+
+async function readIndex(cwd) {
+  return JSON.parse(await readFile(path.join(cwd, 'dist/data/article-index.json'), 'utf8'));
+}
+
+// The real public site must build without accidentally publishing test fixtures.
+runBuild(root);
+const publicFiles = await readdir(path.join(root, 'dist'));
+assert.ok(!publicFiles.includes('tests'));
+assert.ok(!publicFiles.includes('README.md'));
+console.log('PASS public site excludes tests and README');
+passed++;
+
+await test('chapter config, article metadata, and explicit display order', async cwd => {
+  runBuild(cwd);
+  const chapters = await readIndex(cwd);
+  assert.deepEqual(chapters.map(ch => ch.id), ['phonology', 'morphology']);
+  assert.deepEqual(chapters.map(ch => ch.title), ['音韻論', '形態論']);
+  assert.deepEqual(chapters[0].articles.map(a => a.id), ['syllables', 'phonemes']);
+  assert.deepEqual(chapters[1].articles.map(a => a.id), ['nouns']);
+  assert.equal(chapters[0].overview.file, 'articles/phonology/config.json');
+  assert.deepEqual(chapters[0].overview.tags, ['音韻論']);
+  const phonemes = chapters[0].articles[1];
+  assert.equal(phonemes.title, '音素');
+  assert.equal(phonemes.summary, 'テスト用の音素記事');
+  assert.equal(phonemes.date, '2026-11-05');
+  assert.deepEqual(phonemes.tags, ['音韻論', 'IPA']);
+  assert.deepEqual(phonemes.related, ['syllables']);
+  assert.match(phonemes.body, /!\[音素図\]\(images\/sample.svg\)/);
+  assert.deepEqual(chapters[0].articles[0].tags, ['音韻論', '音節']);
+  assert.deepEqual(chapters[1].articles[0].tags, ['形態論', '名詞']);
+  const image = await readFile(path.join(cwd, 'dist/articles/phonology/images/sample.svg'), 'utf8');
+  assert.match(image, /<svg/);
+  assert.ok(!(await readdir(path.join(cwd, 'dist'))).includes('tests'));
+});
+
+await test('missing chapter config is rejected', async cwd => {
+  await rm(path.join(cwd, 'articles/phonology/config.json'));
+  runBuild(cwd, true, /Missing or invalid chapter config/);
+});
+
+await test('unknown article ID in chapters.json is rejected', async cwd => {
+  await change(cwd, 'data/chapters.json', JSON.stringify({phonology: ['unknown'], morphology: ['nouns']}));
+  runBuild(cwd, true, /not an article/);
+});
+
+await test('duplicate article IDs are rejected', async cwd => {
+  const file = 'articles/morphology/nouns.md';
+  const original = await readFile(path.join(cwd, file), 'utf8');
+  await change(cwd, file, original.replace('id: "nouns"', 'id: "phonemes"'));
+  runBuild(cwd, true, /Duplicate Markdown id/);
+});
+
+await test('missing frontmatter is rejected', async cwd => {
+  await change(cwd, 'articles/morphology/nouns.md', '# No metadata\n');
+  runBuild(cwd, true, /frontmatter .* required/);
+});
+
+await test('unlisted Markdown article is rejected', async cwd => {
+  await change(cwd, 'data/chapters.json', JSON.stringify({phonology: ['syllables', 'phonemes'], morphology: []}));
+  runBuild(cwd, true, /not listed in chapters.json/);
+});
+
+console.log('All ' + passed + ' build tests passed');
