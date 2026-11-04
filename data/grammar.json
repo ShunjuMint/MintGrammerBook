@@ -1,0 +1,9 @@
+[
+  {"id":"overview","chapter":"01 言語の概要","title":"言語の概要","summary":"文法書の構成と記述方法。","tags":["概要"],"sections":[{"title":"この文法書の読み方","paragraphs":["左側の目次から文法項目を選択できます。検索欄では項目名・説明・例文を検索できます。","以下の項目は文法データの記述例であり、Tum Rareの正式な文法規則を示すものではありません。"]}],"related":["phonemes","word-structure"]},
+  {"id":"phonemes","chapter":"02 音韻論","title":"音素と発音","summary":"音素目録・音節構造・音韻規則を記述します。","tags":["音韻論","IPA"],"sections":[{"title":"音素目録","paragraphs":["子音・母音の体系をここに記載します。IPA記号も入力できます（例：/a/, /i/, /u/）。"]},{"title":"音韻規則","paragraphs":["異音、音節構造、アクセントなどの記述を追加できます。"]}],"related":["writing"]},
+  {"id":"writing","chapter":"03 表記体系","title":"文字と綴り","summary":"文字・綴字・発音の対応関係。","tags":["表記"],"sections":[{"title":"表記規則","paragraphs":["文字一覧や転写方法をここに記載します。"]}]},
+  {"id":"word-structure","chapter":"04 形態論","title":"語の構造","summary":"語根・接辞・語形成の項目。","tags":["形態論"],"sections":[{"title":"形態素","paragraphs":["語根、接辞、屈折などの規則を記述します。"]},{"title":"例文の表示形式","paragraphs":["以下は表示確認のための架空の例文です。"],"examples":[{"text":"sample-a sample-b","segmented":"sample-a  sample-b","gloss":"NOUN  VERB","translation":"（例文の日本語訳）"}]}],"related":["nouns","syntax"]},
+  {"id":"nouns","chapter":"04 形態論","title":"名詞","summary":"名詞の文法的性質、数、格など。","tags":["形態論","名詞"],"sections":[{"title":"数","paragraphs":["単数・複数などの区別がある場合は記述します。"]},{"title":"格","paragraphs":["格標示の有無や格に相当する表現を記述します。"]}]},
+  {"id":"syntax","chapter":"05 統語論","title":"基本語順","summary":"文の構造や語順。","tags":["統語論"],"sections":[{"title":"基本語順","paragraphs":["主語・目的語・動詞などの標準的な並び方を記述します。"]},{"title":"文の種類","paragraphs":["平叙文、疑問文、命令文の形成規則を記述します。"]}],"related":["word-structure"]},
+  {"id":"semantics","chapter":"06 意味論","title":"意味と用法","summary":"語や構文の意味、文脈依存の用法。","tags":["意味論"],"sections":[{"title":"意味の区別","paragraphs":["時制・相・法や話題・焦点など、意味に関わる区別を記述します。"]}]}
+]
