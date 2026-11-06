@@ -1,3 +1,10 @@
 {
-  "introductions": ["introduce"]
+  "introductions": ["introduce"],
+    "phonology": [
+    "syllables",
+    "phonemes"
+  ],
+  "morphology": [
+    "nouns"
+  ]
 }
