@@ -28,7 +28,6 @@ async function prepareFixture() {
   await mkdir(path.join(cwd, 'site'));
   await cp(path.join(root, 'site/index.html'), path.join(cwd, 'site/index.html'));
   await cp(path.join(root, 'site/assets'), path.join(cwd, 'site/assets'), {recursive: true});
-  await cp(path.join(fixtureRoot, 'articles'), path.join(cwd, 'site/articles'), {recursive: true});
   await cp(path.join(fixtureRoot, 'data'), path.join(cwd, 'site/data'), {recursive: true});
   return cwd;
 }
@@ -67,7 +66,7 @@ await test('chapter config, article metadata, and explicit display order', async
   assert.deepEqual(chapters.map(ch => ch.title), ['音韻論', '形態論']);
   assert.deepEqual(chapters[0].articles.map(a => a.id), ['syllables', 'phonemes']);
   assert.deepEqual(chapters[1].articles.map(a => a.id), ['nouns']);
-  assert.equal(chapters[0].overview.file, 'articles/phonology/config.json');
+  assert.equal(chapters[0].overview.file, 'data/articles/phonology/config.json');
   assert.deepEqual(chapters[0].overview.tags, ['音韻論']);
   const phonemes = chapters[0].articles[1];
   assert.equal(phonemes.title, '音素');
@@ -76,15 +75,31 @@ await test('chapter config, article metadata, and explicit display order', async
   assert.deepEqual(phonemes.tags, ['音韻論', 'IPA']);
   assert.deepEqual(phonemes.related, ['syllables']);
   assert.match(phonemes.body, /!\[音素図\]\(images\/sample.svg\)/);
+  assert.match(phonemes.body, /data-example-id="sample-001"/);
+  assert.match(phonemes.body, /テスト用の例文/);
   assert.deepEqual(chapters[0].articles[0].tags, ['音韻論', '音節']);
   assert.deepEqual(chapters[1].articles[0].tags, ['形態論', '名詞']);
-  const image = await readFile(path.join(cwd, 'dist/articles/phonology/images/sample.svg'), 'utf8');
+  const image = await readFile(path.join(cwd, 'dist/data/articles/phonology/images/sample.svg'), 'utf8');
   assert.match(image, /<svg/);
   assert.ok(!(await readdir(path.join(cwd, 'dist'))).includes('tests'));
 });
 
+await test('unknown example reference fails build', async cwd => {
+  const file='site/data/articles/phonology/phonemes.md';
+  const source=await readFile(path.join(cwd,file),'utf8');
+  await change(cwd,file,source.replace('{{example:sample-001}}','{{example:nonexistent}}'));
+  runBuild(cwd,true,/example ID not found/);
+});
+
+await test('duplicate example IDs are rejected', async cwd => {
+  const file='site/data/sample sentence/sentences.json';
+  const records=JSON.parse(await readFile(path.join(cwd,file),'utf8'));
+  await change(cwd,file,JSON.stringify([...records,...records]));
+  runBuild(cwd,true,/Duplicate example ID/);
+});
+
 await test('missing chapter config is rejected', async cwd => {
-  await rm(path.join(cwd, 'site/articles/phonology/config.json'));
+  await rm(path.join(cwd, 'site/data/articles/phonology/config.json'));
   runBuild(cwd, true, /Missing or invalid chapter config/);
 });
 
@@ -94,14 +109,14 @@ await test('unknown article ID in chapters.json is rejected', async cwd => {
 });
 
 await test('duplicate article IDs are rejected', async cwd => {
-  const file = 'site/articles/morphology/nouns.md';
+  const file = 'site/data/articles/morphology/nouns.md';
   const original = await readFile(path.join(cwd, file), 'utf8');
   await change(cwd, file, original.replace('id: "nouns"', 'id: "phonemes"'));
   runBuild(cwd, true, /Duplicate Markdown id/);
 });
 
 await test('missing frontmatter is rejected', async cwd => {
-  await change(cwd, 'site/articles/morphology/nouns.md', '# No metadata\n');
+  await change(cwd, 'site/data/articles/morphology/nouns.md', '# No metadata\n');
   runBuild(cwd, true, /frontmatter .* required/);
 });
 
