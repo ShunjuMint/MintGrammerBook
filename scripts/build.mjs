@@ -110,7 +110,7 @@ export async function build(destination=path.join(root,'dist')){
   if(relativeParts.length<2)fail('Markdown files must be inside an English-named chapter folder: '+rel);
   const folder=relativeParts[0];
   if(!/^[a-z][a-z0-9-]*$/.test(folder))fail('Chapter folder must use English lowercase letters: '+folder);
-  all.set(meta.id,{...meta,file:rel,folder});
+  all.set(meta.id,{...meta,body:insertExamples(meta.body,sentences,rel),file:rel,folder});
  }
  const chapters=[],ids=new Set();
  for(const [folder,articleIds] of Object.entries(ordering)){
