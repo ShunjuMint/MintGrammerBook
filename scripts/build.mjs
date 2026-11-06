@@ -75,64 +75,15 @@ async function loadSentences(){
 }
 const escapeHTML=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 function insertExamples(body,examples,source){
- // Standalone directives only. Ignore directives inside fenced code blocks.
+ // Only standalone {{example:ID}} directives are expanded; fenced code stays literal.
  let fence=null;
  return body.split(/\r?\n/).map(line=>{
   const trimmed=line.trim();
-  const start=trimmed.match(/^(`{3,}|~{3,})/);
+  const start=trimmed.match(/^([`~])\1{2,}/);
   if(start){
-   if(!fence)fence={char:start[1][0],length:start[1].length};
-   else if(start[1][0]===fence.char&&start[1].length>=fence.length&&new RegExp('^'+fence.char+'{'+fence.length+',}\\s*
- const ordering=JSON.parse(await file('data/chapters.json'));
- const sentences=await loadSentences();
- if(!ordering||typeof ordering!=='object'||Array.isArray(ordering))fail('chapters.json must be an object: {"phonology": ["article-id"]}');
- const articleRoot=path.join(site,'data','articles');
- const files=await scan(articleRoot);
- const all=new Map();
- for(const filename of files){
-  const rel=relative(filename),meta=parseFrontmatter(await readFile(filename,'utf8'),rel);
-  if(all.has(meta.id))fail('Duplicate Markdown id: '+meta.id);
-  const relativeParts=path.relative(articleRoot,filename).split(path.sep);
-  if(relativeParts.length<2)fail('Markdown files must be inside an English-named chapter folder: '+rel);
-  const folder=relativeParts[0];
-  if(!/^[a-z][a-z0-9-]*$/.test(folder))fail('Chapter folder must use English lowercase letters: '+folder);
-  all.set(meta.id,{...meta,body:insertExamples(meta.body,sentences,rel),file:rel,folder});
- }
- const chapters=[],ids=new Set();
- for(const [folder,articleIds] of Object.entries(ordering)){
-  if(!/^[a-z][a-z0-9-]*$/.test(folder))fail('Invalid English chapter folder: '+folder);
-  if(!Array.isArray(articleIds))fail(folder+': article order must be an array');
-  const configPath='data/articles/'+folder+'/config.json';
-  let config;
-  try{config=JSON.parse(await file(configPath));}catch(error){fail('Missing or invalid chapter config: '+configPath+' ('+error.message+')')}
-  if(config.id!==undefined&&config.id!==folder)fail(configPath+': id must match folder name');
-  if(typeof config.title!=='string'||!config.title.trim())fail(configPath+': title is required');
-  if(all.has(folder))fail('Chapter id conflicts with an article id: '+folder);
-  const overview={id:folder,title:config.title,summary:typeof config.summary==='string'?config.summary:'',
-    date:typeof config.date==='string'?config.date:'',tags:Array.isArray(config.tags)?config.tags:[],
-    related:Array.isArray(config.related)?config.related:[],file:configPath,folder,
-    body:'# '+config.title+'\n\n'+(typeof config.summary==='string'?config.summary:'')};
-  ids.add(folder);
-  const articles=[];
-  for(const id of articleIds){
-   if(!isId(id)||ids.has(id))fail('Invalid or repeated ordered id: '+id);
-   const article=all.get(id);
-   if(!article||article.folder!==folder)fail('Article '+id+' is not an article in articles/'+folder);
-   ids.add(id);articles.push(article);
-  }
-  chapters.push({id:folder,title:overview.title,overview,articles});
- }
- for(const id of all.keys())if(!ids.has(id))fail('Markdown article not listed in chapters.json: '+id);
- await mkdir(destination,{recursive:true});
- for(const name of ['index.html'])await cp(path.join(site,name),path.join(destination,name));
- for(const dir of ['assets','data'])await cp(path.join(site,dir),path.join(destination,dir),{recursive:true});
- await writeFile(path.join(destination,'data','article-index.json'),JSON.stringify(chapters,null,2)+'\n');
- return {chapters:chapters.length,articles:ids.size};
-}
-if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- try{const report=await build();console.log('Built '+report.articles+' articles in '+report.chapters+' chapters')}catch(error){console.error(error);process.exitCode=1}
-}
-).test(trimmed))fence=null;
+   const length=start[0].length;
+   if(!fence)fence={char:start[1],length};
+   else if(start[1]===fence.char&&length>=fence.length&&trimmed===fence.char.repeat(trimmed.length))fence=null;
    return line;
   }
   if(fence)return line;
