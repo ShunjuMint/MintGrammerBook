@@ -99,6 +99,7 @@ function insertExamples(body,examples,source){
 }
 export async function build(destination=path.join(root,'dist')){
  const ordering=JSON.parse(await file('data/chapters.json'));
+ const sentences=await loadSentences();
  if(!ordering||typeof ordering!=='object'||Array.isArray(ordering))fail('chapters.json must be an object: {"phonology": ["article-id"]}');
  const articleRoot=path.join(site,'data','articles');
  const files=await scan(articleRoot);
