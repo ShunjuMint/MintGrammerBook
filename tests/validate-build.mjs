@@ -66,8 +66,7 @@ await test('chapter config, article metadata, and explicit display order', async
   assert.deepEqual(chapters.map(ch => ch.title), ['音韻論', '形態論']);
   assert.deepEqual(chapters[0].articles.map(a => a.id), ['syllables', 'phonemes']);
   assert.deepEqual(chapters[1].articles.map(a => a.id), ['nouns']);
-  assert.equal(chapters[0].overview.file, 'data/articles/phonology/config.json');
-  assert.deepEqual(chapters[0].overview.tags, ['音韻論']);
+  assert.ok(chapters.every(ch => !('overview' in ch)));
   const phonemes = chapters[0].articles[1];
   assert.equal(phonemes.title, '音素');
   assert.equal(phonemes.summary, 'テスト用の音素記事');

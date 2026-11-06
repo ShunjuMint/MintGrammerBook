@@ -32,6 +32,8 @@ async function show(id,historyMode=false){
  $('query').value='';$('clear').hidden=true;$('results').hidden=true;$('article').hidden=false;
  const a=$('article');a.replaceChildren(node('p',item.chapter,'eyebrow'),node('p','記事を読み込んでいます…','muted'));
  document.querySelectorAll('#toc a').forEach(link=>link.dataset.id===item.id?link.setAttribute('aria-current','page'):link.removeAttribute('aria-current'));
+ const activeLink=document.querySelector('#toc a[aria-current]');
+ if(activeLink)activeLink.closest('details').open=true;
  const idx=items.indexOf(item);for(const [key,target,prefix] of [['prev',items[idx-1],'← '],['next',items[idx+1],'→ ']]){const link=$(key);link.hidden=!target;if(target){link.href=href(target.id);link.dataset.id=target.id;link.textContent=prefix+target.title}}
  try{
   if(typeof item.body!=='string')throw Error('記事本文がありません');
@@ -55,9 +57,22 @@ function search(){
 function renderTOC(){
  $('toc').replaceChildren();
  for(const chapter of chapters){
-  const main=lookup.get(chapter.id);
-  if(main){const a=itemLink(main);a.textContent=chapter.title;a.className='chapter';$('toc').append(a)}
-  for(const x of chapter.articles){const item=lookup.get(x.id);if(!item)continue;const a=itemLink(item);a.textContent=item.title;$('toc').append(a)}
+  const group=node('details');
+  group.open=true;
+  const heading=node('summary',undefined,'chapter');
+  heading.append(node('span',chapter.title));
+  const state=node('span',undefined,'chapter-state');
+  state.setAttribute('aria-hidden','true');
+  state.append(node('span','表示中','when-open'),node('span','折りたたみ中','when-closed'));
+  heading.append(state);
+  const list=node('div',undefined,'chapter-articles');
+  for(const item of chapter.articles){
+   const a=itemLink(item);
+   a.textContent=item.title;
+   list.append(a);
+  }
+  group.append(heading,list);
+  $('toc').append(group);
  }
 }
 $('query').addEventListener('input',search);$('clear').onclick=()=>show(selected()||items[0]?.id);
@@ -69,12 +84,12 @@ try{
  const [cfg,all]=await Promise.all([readJSON('data/config.json'),readJSON('data/article-index.json')]);
  if(!Array.isArray(all))throw Error('article-index.json は配列にしてください');
  chapters=all.filter(c=>typeof c.title==='string'&&Array.isArray(c.articles));
- items=chapters.flatMap(c=>[c.overview,...c.articles].filter(Boolean).map(x=>({...x,chapter:c.title})));
+ items=chapters.flatMap(c=>c.articles.map(x=>({...x,chapter:c.title})));
  if(items.some(x=>typeof x.id!=='string'||typeof x.title!=='string'||!validPath(x.file)))throw Error('記事のid、title、fileを確認してください');
  if(new Set(items.map(x=>x.id)).size!==items.length)throw Error('記事IDが重複しています');
  lookup=new Map(items.map(x=>[x.id,x]));
  $('brand').textContent=cfg.title||'文法書';document.title=cfg.title||'文法書';$('about-text').textContent=cfg.about||'説明は未登録です。';
- $('count').textContent=items.length+' 項目';renderTOC();
+ $('count').textContent=items.length+' 記事';renderTOC();
  if(items.length)await show(selected());else{$('status').hidden=false;$('status').textContent='文法記事が登録されていません。'}
  if(selected()&&!lookup.has(selected())){$('status').hidden=false;$('status').textContent='指定された項目がありません。先頭の記事を表示しています。'}
 }catch(e){console.error(e);$('status').hidden=false;$('status').textContent='文法データを読み込めませんでした。Webサーバー上で開いているか確認してください。'}

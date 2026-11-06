@@ -122,12 +122,6 @@ export async function build(destination=path.join(root,'dist')){
   try{config=JSON.parse(await file(configPath));}catch(error){fail('Missing or invalid chapter config: '+configPath+' ('+error.message+')')}
   if(config.id!==undefined&&config.id!==folder)fail(configPath+': id must match folder name');
   if(typeof config.title!=='string'||!config.title.trim())fail(configPath+': title is required');
-  if(all.has(folder))fail('Chapter id conflicts with an article id: '+folder);
-  const overview={id:folder,title:config.title,summary:typeof config.summary==='string'?config.summary:'',
-    date:typeof config.date==='string'?config.date:'',tags:Array.isArray(config.tags)?config.tags:[],
-    related:Array.isArray(config.related)?config.related:[],file:configPath,folder,
-    body:'# '+config.title+'\n\n'+(typeof config.summary==='string'?config.summary:'')};
-  ids.add(folder);
   const articles=[];
   for(const id of articleIds){
    if(!isId(id)||ids.has(id))fail('Invalid or repeated ordered id: '+id);
@@ -135,7 +129,7 @@ export async function build(destination=path.join(root,'dist')){
    if(!article||article.folder!==folder)fail('Article '+id+' is not an article in articles/'+folder);
    ids.add(id);articles.push(article);
   }
-  chapters.push({id:folder,title:overview.title,overview,articles});
+  chapters.push({id:folder,title:config.title,articles});
  }
  for(const id of all.keys())if(!ids.has(id))fail('Markdown article not listed in chapters.json: '+id);
  await mkdir(destination,{recursive:true});
