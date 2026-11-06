@@ -16,3 +16,5 @@ related: ["syllables"]
 | /a/ | 母音の例 |
 
 ![音素図](images/sample.svg)
+
+{{example:sample-001}}

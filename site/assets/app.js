@@ -7,7 +7,7 @@ const href=id=>{const u=new URL(location.href);u.searchParams.set('id',id);u.has
 function itemLink(item){const a=node('a');a.href=href(item.id);a.dataset.id=item.id;return a}
 async function read(path){const r=await fetch(new URL(path,document.baseURI),{cache:'no-cache'});if(!r.ok)throw Error(path+': HTTP '+r.status);return r.text()}
 async function readJSON(path){return JSON.parse(await read(path))}
-function validPath(path){return typeof path==='string'&&/^articles\/[^?#\\]+\.(?:md|json)$/u.test(path)&&!path.split('/').some(s=>s==='..'||s==='.'||s==='')}
+function validPath(path){return typeof path==='string'&&/^data\/articles\/[^?#\\]+\.(?:md|json)$/u.test(path)&&!path.split('/').some(s=>s==='..'||s==='.'||s==='')}
 function markdownHTML(text,file){
  if(!window.marked||!window.DOMPurify)throw Error('Markdown表示ライブラリを読み込めませんでした');
  const html=window.marked.parse(text,{gfm:true,breaks:false});
@@ -21,7 +21,7 @@ function markdownHTML(text,file){
    const address=a.getAttribute('href')||'';
    if(address.startsWith('#'))continue;
    if(!/^(?:[a-z][a-z0-9+.-]*:|\/)/i.test(address))a.setAttribute('href',new URL(address,base).href);
-   try{const u=new URL(address,document.baseURI);if(u.protocol==='https:'||u.protocol==='http:'){a.target='_blank';a.rel='noopener noreferrer';}else a.removeAttribute('href');}catch{a.removeAttribute('href')}
+   try{const u=new URL(a.getAttribute('href'),document.baseURI);if(u.protocol==='https:'||u.protocol==='http:'){a.target='_blank';a.rel='noopener noreferrer';}else a.removeAttribute('href');}catch{a.removeAttribute('href')}
  }
  return template.content;
 }
