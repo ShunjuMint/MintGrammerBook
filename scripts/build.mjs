@@ -94,7 +94,7 @@ function insertExamples(body,examples,source){
   }
   const sentence=examples.get(match[1]);
   if(!sentence)fail(source+': example ID not found: '+match[1]);
-  return '<div class="example" data-example-id="'+escapeHTML(sentence.id)+'"><p class="original">'+escapeHTML(sentence.text)+'</p><p>'+escapeHTML(sentence.translation)+'</p></div>';
+  return '<div class="example" data-example-id="'+escapeHTML(sentence.id)+'"><p class="original language-script">'+escapeHTML(sentence.text)+'</p><p class="romanization">'+escapeHTML(sentence.text)+'</p><p>'+escapeHTML(sentence.translation)+'</p></div>';
  }).join('\n');
 }
 export async function build(destination=path.join(root,'dist')){

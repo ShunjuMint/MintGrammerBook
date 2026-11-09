@@ -8,6 +8,30 @@ function itemLink(item){const a=node('a');a.href=href(item.id);a.dataset.id=item
 async function read(path){const r=await fetch(new URL(path,document.baseURI),{cache:'no-cache'});if(!r.ok)throw Error(path+': HTTP '+r.status);return r.text()}
 async function readJSON(path){return JSON.parse(await read(path))}
 function validPath(path){return typeof path==='string'&&/^data\/articles\/[^?#\\]+\.(?:md|json)$/u.test(path)&&!path.split('/').some(s=>s==='..'||s==='.'||s==='')}
+// Markdown tokenization keeps these directives literal inside code.
+if(window.marked){
+ window.marked.use({extensions:[{
+  name:'languageText',
+  level:'inline',
+  start(source){return source.indexOf('{{')},
+  tokenizer(source){
+   const match=/^\{\{(font|text):([^{}\n]+)\}\}/.exec(source);
+   if(match)return {type:'languageText',raw:match[0],mode:match[1],text:match[2]};
+  },
+  renderer(token){
+   const script=node('span',token.text,'language-script');
+   if(token.mode==='font')return script.outerHTML;
+   const pair=node('span',undefined,'language-text');
+   pair.append(script,node('span',token.text,'romanization'));
+   return pair.outerHTML;
+  }
+ }]});
+}
+document.fonts.load('1em TumRare').then(fonts=>{
+ document.documentElement.dataset.languageFont=fonts.length?'ready':'failed';
+}).catch(()=>{
+ document.documentElement.dataset.languageFont='failed';
+});
 function markdownHTML(text,file){
  if(!window.marked||!window.DOMPurify)throw Error('Markdown表示ライブラリを読み込めませんでした');
  const html=window.marked.parse(text,{gfm:true,breaks:false});

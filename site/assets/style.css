@@ -32,3 +32,53 @@
 .markdown-body img{max-width:100%;height:auto}
 .markdown-body hr{border:0;border-top:1px solid var(--line);margin:26px 0}
 @media(max-width:700px){.markdown-body h1{font-size:1.5rem}.markdown-body h2{font-size:1.16rem}}
+
+/* Keep the same font and OpenType ligatures as MintDic. */
+@font-face {
+  font-family: "TumRare";
+  src: url("./fonts/TumRare.otf") format("opentype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+}
+.language-script {
+  font-family: "TumRare", sans-serif;
+  font-size: 1.6em;
+  font-weight: 400;
+  font-style: normal;
+  font-synthesis: none;
+  letter-spacing: normal;
+  font-variant-ligatures: common-ligatures contextual;
+  font-feature-settings: "liga" 1, "clig" 1, "calt" 1;
+  overflow-wrap: anywhere;
+}
+html:not([data-language-font]) .language-script {
+  visibility: hidden;
+}
+.romanization {
+  font-family: "M PLUS 2", "Noto Sans JP", "Segoe UI", Meiryo, sans-serif;
+  font-size: 1em;
+  font-weight: 400;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.language-text {
+  display: inline-flex;
+  flex-direction: column;
+  vertical-align: middle;
+  max-width: 100%;
+}
+.language-text > .language-script {
+  line-height: 1.5;
+}
+.language-text > .romanization {
+  line-height: 1.6;
+}
+.example > .language-script {
+  font-size: 2rem;
+  margin-bottom: 4px;
+}
+.example > .romanization {
+  font-size: 1.25rem;
+  margin-bottom: 8px;
+}
