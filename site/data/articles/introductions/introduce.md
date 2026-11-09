@@ -1,7 +1,7 @@
 ---
 id: "introduce"
 title: "まず、初めに"
-summary: "テスト"
+summary: "導入のための文章"
 date: 2026-11-10
 tags: "導入"
 related: ""
