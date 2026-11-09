@@ -21,8 +21,8 @@ if(window.marked){
   renderer(token){
    const script=node('span',token.text,'language-script');
    if(token.mode==='font')return script.outerHTML;
-   const pair=node('span',undefined,'language-text');
-   pair.append(script,node('span',token.text,'romanization'));
+   const pair=node('ruby',undefined,'language-text');
+   pair.append(script,node('rt',token.text,'romanization'));
    return pair.outerHTML;
   }
  }]});
