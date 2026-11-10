@@ -36,7 +36,7 @@
 /* Keep the same font and OpenType ligatures as MintDic. */
 @font-face {
   font-family: "TumRare";
-  src: url("./fonts/TumRare.otf?v=2351032e1d0f") format("opentype");
+  src: url("./fonts/TumRare.otf") format("opentype");
   font-style: normal;
   font-weight: 400;
   font-display: block;
