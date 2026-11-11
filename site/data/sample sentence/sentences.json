@@ -3,5 +3,20 @@
     "id": "sample-001",
     "text": "test-word example",
     "translation": "テスト用の例文"
+  },
+    {
+    "id": "basis-001",
+    "text": "tas tumrare rare ad ce.",
+    "translation": "私はTum Rareを話します。"
+  },
+  {
+    "id": "basis-002",
+    "text": "ad ce vi ad elisa.",
+    "translation": "私はエリサです。"
+  },
+    {
+    "id": "basis-002-ex",
+    "text": "ce vi elisa.",
+    "translation": "私はエリサです。"
   }
 ]
