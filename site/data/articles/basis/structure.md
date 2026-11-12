@@ -1,7 +1,7 @@
 ---
 id: "structure"
-title: "文の構造と機能詞"
-summary: "Tum Rareの文の構造、機能詞について学ぶ記事です"
+title: "文の構造"
+summary: "Tum Rareの文の構造について学ぶ記事です"
 date: 2026-11-12
 tags: "基礎"
 related: ""
