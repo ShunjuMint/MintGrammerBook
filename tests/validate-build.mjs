@@ -119,9 +119,15 @@ await test('missing frontmatter is rejected', async cwd => {
   runBuild(cwd, true, /frontmatter .* required/);
 });
 
-await test('unlisted Markdown article is rejected', async cwd => {
+await test('removing an article from the list unpublishes it and permits unfinished drafts', async cwd => {
+  runBuild(cwd);
+  const folder = 'data/articles/morphology';
+  await change(cwd, 'site/' + folder + '/draft.md', '# Work in progress');
   await change(cwd, 'site/data/chapters.json', JSON.stringify({phonology: ['syllables', 'phonemes'], morphology: []}));
-  runBuild(cwd, true, /not listed in chapters.json/);
+  runBuild(cwd);
+  assert.deepEqual((await readIndex(cwd))[1].articles, []);
+  assert.deepEqual(await readdir(path.join(cwd, 'dist', folder)), ['config.json']);
+  assert.ok((await readdir(path.join(cwd, 'site', folder))).includes('nouns.md'));
 });
 
 console.log('All ' + passed + ' build tests passed');

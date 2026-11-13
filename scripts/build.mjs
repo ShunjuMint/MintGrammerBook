@@ -1,4 +1,4 @@
-import {readFile, readdir, mkdir, cp, writeFile} from 'node:fs/promises';
+import {readFile, readdir, mkdir, cp, rm, writeFile} from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
@@ -103,9 +103,25 @@ export async function build(destination=path.join(root,'dist')){
  if(!ordering||typeof ordering!=='object'||Array.isArray(ordering))fail('chapters.json must be an object: {"phonology": ["article-id"]}');
  const articleRoot=path.join(site,'data','articles');
  const files=await scan(articleRoot);
+ const publishedIds=new Set(Object.values(ordering).flat());
+ const publishedFiles=new Set();
  const all=new Map();
  for(const filename of files){
-  const rel=relative(filename),meta=parseFrontmatter(await readFile(filename,'utf8'),rel);
+  const rel=relative(filename);
+  const source=await readFile(filename,'utf8');
+  let meta;
+  try{
+   meta=parseFrontmatter(source,rel);
+  }catch(error){
+   const header=source.split(/^---\r?$/m);
+   const rawId=header[0]===''&&header[1]?.match(/^id:[ \t]*(.*)$/m);
+   let id;
+   if(rawId){try{id=yamlValue(rawId[1])}catch{}}
+   if(publishedIds.has(id??path.basename(filename,'.md')))throw error;
+   continue;
+  }
+  if(!publishedIds.has(meta.id))continue;
+  publishedFiles.add(filename);
   if(all.has(meta.id))fail('Duplicate Markdown id: '+meta.id);
   const relativeParts=path.relative(articleRoot,filename).split(path.sep);
   if(relativeParts.length<2)fail('Markdown files must be inside an English-named chapter folder: '+rel);
@@ -131,10 +147,14 @@ export async function build(destination=path.join(root,'dist')){
   }
   chapters.push({id:folder,title:config.title,articles});
  }
- for(const id of all.keys())if(!ids.has(id))fail('Markdown article not listed in chapters.json: '+id);
+
  await mkdir(destination,{recursive:true});
  for(const name of ['index.html'])await cp(path.join(site,name),path.join(destination,name));
- for(const dir of ['assets','data'])await cp(path.join(site,dir),path.join(destination,dir),{recursive:true});
+ await rm(path.join(destination,'data','articles'),{recursive:true,force:true});
+ for(const dir of ['assets','data'])await cp(path.join(site,dir),path.join(destination,dir),{
+  recursive:true,
+  filter:src=>!src.startsWith(articleRoot+path.sep)||!src.endsWith('.md')||publishedFiles.has(src)
+ });
  await writeFile(path.join(destination,'data','article-index.json'),JSON.stringify(chapters,null,2)+'\n');
  return {chapters:chapters.length,articles:ids.size};
 }
