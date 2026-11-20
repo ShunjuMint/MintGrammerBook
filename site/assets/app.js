@@ -27,7 +27,7 @@ if(window.marked){
   }
  }]});
 }
-document.fonts.load('1em TumRare').then(fonts=>{
+document.fonts.load('1em Tum').then(fonts=>{
  document.documentElement.dataset.languageFont=fonts.length?'ready':'failed';
 }).catch(()=>{
  document.documentElement.dataset.languageFont='failed';

@@ -35,14 +35,14 @@
 
 /* Keep the same font and OpenType ligatures as MintDic. */
 @font-face {
-  font-family: "TumRare";
-  src: url("./fonts/TumRare.otf?v=3c7f7e2ea6b7") format("opentype");
+  font-family: "Tum";
+  src: url("./fonts/Tum.otf?v=ca29a69988cf") format("opentype");
   font-style: normal;
   font-weight: 400;
   font-display: block;
 }
 .language-script {
-  font-family: "TumRare", sans-serif;
+  font-family: "Tum", sans-serif;
   font-size: 1.6em;
   font-weight: 400;
   font-style: normal;
