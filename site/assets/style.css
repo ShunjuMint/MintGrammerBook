@@ -83,3 +83,51 @@ html:not([data-language-font]) .language-script {
   font-size: 1.25rem;
   margin-bottom: 8px;
 }
+
+/* 辞書・文法書の相互リンクで共通の表示 */
+header nav .site-switch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-accent);
+  border-radius: 6px;
+  background: var(--hover);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: normal;
+  white-space: nowrap;
+  text-decoration: none;
+}
+header nav .site-switch:hover {
+  background: var(--soft);
+  color: var(--ink);
+  border-color: var(--green);
+  text-decoration: none;
+}
+header nav .site-switch:focus-visible {
+  outline: 3px solid var(--green);
+  outline-offset: 3px;
+}
+.site-switch svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+@media (max-width: 700px) {
+  header {
+    height: auto;
+    min-height: 76px;
+    padding: 16px 20px;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+  }
+  header nav {
+    flex-wrap: wrap;
+    gap: 8px 16px;
+  }
+}
