@@ -155,3 +155,12 @@ header nav .site-switch:focus-visible {
   padding: .45em .65em;
 }
 .markdown-body :is(h1,h2,h3):has(ruby) { padding-block-start: 1.1em; }
+
+/* 日本語本文に混在するTum文字。見出しと独立した例文には適用しない。 */
+.markdown-body .language-text:not(:is(h1,h2,h3,h4,h5,h6,.example) *) {
+  position: relative;
+  top: 0.0625em;
+}
+.markdown-body .language-text:not(:is(h1,h2,h3,h4,h5,h6,.example) *) > .language-script {
+  font-size: 1.1em;
+}
